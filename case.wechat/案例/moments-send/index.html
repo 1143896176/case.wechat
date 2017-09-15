@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<style>
+			#container {
+				height: 500px;
+				width: 300px;
+				overflow: scroll;
+				background-color: lightblue;
+			}
+			
+			::-webkit-scrollbar {
+				display: none;
+			}
+		</style>
+	</head>
+
+	<body>
+		<input type="button" name="server" id="server_start" value="server_start" />
+		<input type="button" name="server" id="server_end" value="server_end" />
+		<input type="button" name="server" id="flush_start" value="flush_start" />
+		<input type="button" name="server" id="flush_end" value="flush_end" />
+		
+		<hr />
+		<input type="text" id="self"/>
+		<input type="button" id="btn_self" value="send" /><br><br>
+		<div id="container">
+
+		</div>
+
+	</body>
+
+</html>
+<script type="text/javascript" src="../jquery/jquery.js"></script>
+<script type="text/javascript" src="index.js" ></script>
+
+<script>
+	
+	/* time 代表 随机生成时间间隔 */
+	var time = 0;
+	var server_task;
+	function runServer() { // 模拟朋友们 不定期  发圈
+		server_task = setTimeout(function() {
+			time = Math.round(Math.random() * 4 * 1000); //生成 0-4s 的任意事件 
+
+			var moment = dynamicServerMoment();
+			
+			curr = combine( curr , moment)  //将刚生成的朋友圈 json 添加到 curr 临时数组中
+			
+			runServer();
+		}, time);
+	}
+	
+	var curr_task;
+	function flushCurr(){  // 每 4 秒  清空缓冲
+		curr_task = setTimeout(function(){
+			
+			renderToContainer(); //讲缓冲区内容  append 到  层中
+			curr.length = 0;
+
+			flushCurr();
+		}, 4000 )
+	}
+
+	function combine( ) { //任意数组合并
+		var sum = [];
+		if(arguments != null & arguments.length > 0) {
+			for(var i = 0, length = arguments.length; i < length; i++) {
+				sum = sum.concat(arguments[i])
+			}
+		} 
+		return sum.sort(function(a , b) {
+			return parseInt(a.ts) - parseInt(b.ts); 
+		});
+	}
+	
+	function renderToContainer() {
+		if(curr!=null && curr.length > 0 ) {
+			$(curr).each(function( i , d){
+				var moment = $("<div></div>").html(d)
+				$("#container").append(moment)
+			})
+		}
+	}
+	
+	//服务端 自动 随机生成 朋友圈内容
+	function dynamicServerMoment() {
+		var index = Math.ceil(Math.random()*25); // 0-25
+
+		var moment = {
+			"title": storage[index]+(index+1),  
+			"ts": new Date().getTime()
+		}
+
+		return JSON.stringify(moment); //将朋友圈对象转换成 json
+	}
+	
+	
+	
+
+	$(function() {
+//		var s = combine( server, sys );  //console.log(s.length);
+
+		$("#server_start").click(function() {
+			runServer();
+		})
+		$("#server_end").click(function() {
+			clearTimeout(server_task)
+		})
+		
+		$("#flush_start").click(function(){
+			flushCurr();
+		})
+		
+		$("#btn_self").click(function(){
+			var self = {  // 模拟自己发圈
+				"title": $("#self").val(),  
+				"ts": new Date().getTime()
+			}
+			curr = combine( curr , JSON.stringify(self))
+			
+		})
+		
+
+	}) ;
+</script>
